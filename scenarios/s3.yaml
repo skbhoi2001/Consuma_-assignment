@@ -1,0 +1,3 @@
+# Scenario: s3
+# TODO: define rate, duration, payload mix, failure injection
+name: s3

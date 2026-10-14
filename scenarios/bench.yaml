@@ -1,0 +1,3 @@
+# Scenario: bench
+# TODO: define rate, duration, payload mix, failure injection
+name: bench

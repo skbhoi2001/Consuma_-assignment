@@ -1,0 +1,3 @@
+# Scenario: s2
+# TODO: define rate, duration, payload mix, failure injection
+name: s2

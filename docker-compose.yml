@@ -1,0 +1,14 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gateway
+      POSTGRES_PASSWORD: gateway
+      POSTGRES_DB: gateway
+    ports: ["5432:5432"]
+
+  # TODO: gateway, dispatcher, callbacks, simulator, receiver, frontend
