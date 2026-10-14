@@ -1,14 +1,30 @@
 services:
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
-
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: gateway
-      POSTGRES_PASSWORD: gateway
-      POSTGRES_DB: gateway
-    ports: ["5432:5432"]
+      POSTGRES_USER: ${POSTGRES_USER:-gateway}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gateway}
+      POSTGRES_DB: ${POSTGRES_DB:-gateway}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
 
-  # TODO: gateway, dispatcher, callbacks, simulator, receiver, frontend
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${REDIS_HOST_PORT:-6380}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  pgdata:

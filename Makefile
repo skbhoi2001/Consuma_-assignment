@@ -1,25 +1,39 @@
-.PHONY: up down logs test scenario1 scenario2 scenario3 bench
+PYTHON ?= python3
+VENV   := .venv
+BIN    := $(VENV)/bin
 
-up:
-	docker compose up -d --build
+.PHONY: install up down logs ps test lint clean
+
+install: $(VENV)/.installed
+
+$(VENV)/.installed: pyproject.toml
+	$(PYTHON) -m venv $(VENV)
+	$(BIN)/pip install --upgrade pip
+	$(BIN)/pip install -e ".[dev]"
+	@touch $@
+
+.env:
+	cp .env.example .env
+
+up: .env
+	docker compose up -d --wait postgres redis
+	docker compose ps
 
 down:
-	docker compose down -v
+	docker compose down
 
 logs:
 	docker compose logs -f
 
-test:
-	pytest backend/tests
+ps:
+	docker compose ps
 
-scenario1:
-	python -m loadgen run scenarios/s1.yaml --out results/s1
+test: install
+	$(BIN)/pytest
 
-scenario2:
-	python -m loadgen run scenarios/s2.yaml --out results/s2
+lint: install
+	$(BIN)/ruff check backend loadgen
 
-scenario3:
-	python -m loadgen run scenarios/s3.yaml --out results/s3
-
-bench:
-	python -m loadgen run scenarios/bench.yaml --out results/bench
+clean:
+	docker compose down -v
+	rm -rf $(VENV) .pytest_cache .ruff_cache
