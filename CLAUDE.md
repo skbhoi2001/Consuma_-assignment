@@ -1,34 +1,22 @@
-# CLAUDE.md — project rules
+# Project: High-throughput inference gateway (interview assignment)
 
-High-throughput inference gateway that respects per-model RPM/TPM limits.
-The brief is in `docs/high-throughput-inference-assignment.pdf`; re-read it when in doubt.
+## Stack
+FastAPI + Uvicorn, Redis, PostgreSQL (SQLAlchemy async + Alembic),
+React + Vite + TypeScript (frontend), Python CLI load generator.
+
+## Hard rules
+- Never exceed a model's RPM or TPM in ANY rolling 60s window.
+- Every request ends in exactly one state;
+  submitted = completed + waiting + expired + rejected.
+- Batch callback fires only when all requests are final; retried with backoff.
+- Each request id appears exactly once in batch results.
+- Keep measured results separate from projections.
+
+## Workflow
+- One feature per commit; conventional commits (feat:, fix:, test:, docs:, perf:, chore:).
+- Write tests with every feature; run `make test` and `make lint` before finishing.
+- Plan before coding; don't add features outside the current commit's scope.
 
 ## Layout
-- `backend/gateway` — FastAPI app: routes, schemas
-- `backend/dispatcher` — queues, rate limiter, workers, retries
-- `backend/callbacks` — batch completion callback worker
-- `backend/simulator` — provider simulator (HTTP + in-process)
-- `backend/receiver` — test callback endpoint
-- `backend/db` — models, alembic migrations
-- `loadgen/` — load generator CLI, scenario presets, report generator
-- `frontend/` — React + Vite dashboard
-- `scenarios/` — scenario configs; `results/` — committed benchmark evidence; `docs/` — reports
-
-## Commands
-- `make install` — create `.venv` and install `.[dev]`
-- `make up` / `make down` — start/stop Postgres + Redis (host ports from `.env`, default 5433/6380)
-- `make test` — run pytest; `make lint` — ruff
-
-## Rules
-- Never exceed a configured RPM or TPM limit in any 60-second window. Limits can change at
-  runtime; the limiter must pick up changes without a restart.
-- Every request must end in exactly one accounted state (completed-success, completed-failure,
-  waiting, expired, rejected). No silent drops; no double counting.
-- "Completed" means the simulated provider call reached a final state, not that the API accepted it.
-- Batch callbacks fire only after every request in the batch is final; delivery retries with backoff
-  and is idempotent (same payload, same batch id).
-- Keep measurements and projections separate in reports. State simulation assumptions explicitly.
-- The hot path stays async and allocation-light; no per-request DB round trips on the dispatch path.
-- Add or update tests alongside behaviour changes; `make test` must pass before committing.
-- Config lives in env vars / scenario YAML, never hardcoded. Don't commit `.env`.
-- Commits follow Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`).
+backend/{common,db,simulator,dispatcher,gateway,callbacks,receiver}, loadgen/, tests/,
+frontend/, scenarios/, results/, docs/

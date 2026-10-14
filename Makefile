@@ -1,39 +1,33 @@
-PYTHON ?= python3
-VENV   := .venv
-BIN    := $(VENV)/bin
+PY := .venv/bin/python
+PIP := .venv/bin/pip
 
-.PHONY: install up down logs ps test lint clean
+.PHONY: install up down db-native test lint fmt clean
 
-install: $(VENV)/.installed
+install:            ## create venv and install deps
+	python3 -m venv .venv
+	$(PIP) install --upgrade pip
+	$(PIP) install -e ".[dev]"
 
-$(VENV)/.installed: pyproject.toml
-	$(PYTHON) -m venv $(VENV)
-	$(BIN)/pip install --upgrade pip
-	$(BIN)/pip install -e ".[dev]"
-	@touch $@
+up:                 ## start Postgres + Redis in Docker
+	docker compose up -d --wait
 
-.env:
-	cp .env.example .env
-
-up: .env
-	docker compose up -d --wait postgres redis
-	docker compose ps
-
-down:
+down:               ## stop Docker services
 	docker compose down
 
-logs:
-	docker compose logs -f
+db-native:          ## start natively installed Postgres + Redis
+	devdb-start
 
-ps:
-	docker compose ps
+test:               ## run tests
+	$(PY) -m pytest -q
 
-test: install
-	$(BIN)/pytest
+lint:               ## lint + format check
+	.venv/bin/ruff check .
+	.venv/bin/ruff format --check .
 
-lint: install
-	$(BIN)/ruff check backend loadgen
+fmt:                ## auto-format
+	.venv/bin/ruff format .
+	.venv/bin/ruff check --fix .
 
-clean:
-	docker compose down -v
-	rm -rf $(VENV) .pytest_cache .ruff_cache
+clean:              ## remove caches
+	rm -rf .pytest_cache .ruff_cache .mypy_cache
+	find . -name __pycache__ -type d -prune -exec rm -rf {} +

@@ -1,40 +1,39 @@
-# inference-gateway
+# Inference Gateway
 
-A high-throughput inference gateway that respects per-model RPM/TPM provider limits, with a
-provider simulator, async batch callbacks, and a load generator. See
-[`docs/high-throughput-inference-assignment.pdf`](docs/high-throughput-inference-assignment.pdf)
-for the brief.
+High-throughput inference processing that respects changing per-model
+RPM (requests/min) and TPM (tokens/min) provider limits.
 
-> Status: project scaffold. Services, simulator, and load generator land in later commits.
-
-## Requirements
-- Python 3.11+
-- Docker (with Compose v2)
+## Prerequisites
+- Python 3.12+
+- Node 20+
+- Docker **or** local PostgreSQL 16 + Redis 7
 
 ## Quick start
-```bash
-make install   # create .venv and install dependencies
-make up        # start Postgres + Redis (creates .env from .env.example on first run)
-make test      # run the test suite
-make down      # stop containers
-```
+    cp .env.example .env
+    make install
+    make up          # or: make db-native
+    make test
 
-Postgres is exposed on `localhost:5433` and Redis on `localhost:6380` by default, so they don't
-collide with local installs. Change `POSTGRES_HOST_PORT` / `REDIS_HOST_PORT` in `.env` if needed.
+## Architecture
+_TODO_
 
-## Layout
-```
-backend/
-  gateway/      FastAPI app: routes, schemas
-  dispatcher/   queues, rate limiter, workers, retries
-  callbacks/    callback worker
-  simulator/    provider simulator (HTTP + in-process)
-  receiver/     test callback endpoint
-  db/           models, alembic migrations
-  tests/
-loadgen/        CLI + scenario presets + report generator
-frontend/       React + Vite dashboard
-scenarios/      scenario configs
-results/        saved benchmark evidence
-docs/           assignment brief, benchmark report, scaling plan
-```
+## Running the services
+_TODO_
+
+## Configuring models and changing limits
+_TODO_
+
+## Validation scenarios
+_TODO_
+
+## Benchmarks
+_TODO_
+
+## Design decisions and tradeoffs
+_TODO_
+
+## Scaling to 10B requests/min
+_TODO_
+
+## AI usage
+_TODO_

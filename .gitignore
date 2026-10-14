@@ -1,29 +1,23 @@
 # Python
+.venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
-.venv/
-venv/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-.coverage
-htmlcov/
-build/
-dist/
 
-# Env
-.env
-
-# Frontend
+# Node
 node_modules/
 frontend/dist/
 
-# Benchmark scratch output (curated evidence is committed explicitly)
-results/tmp/
-*.log
-
-# OS / editors
+# Env / OS
+.env
 .DS_Store
-.idea/
-.vscode/
+
+# Results (commit selected runs explicitly later)
+results/*
+!results/.gitkeep
+
+# Docs (kept local)
+docs/
