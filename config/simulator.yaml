@@ -1,0 +1,19 @@
+# Provider simulator config. Values in `defaults` apply to every model unless overridden.
+# Change at runtime with PUT /sim/models/{name}.
+defaults:
+  latency_median_ms: 200     # lognormal latency: median ...
+  latency_sigma: 0.5         # ... and spread (0 = always the median)
+  transient_error_rate: 0.0  # share of calls answered 503 (retryable)
+  permanent_error_rate: 0.0  # share of calls answered 400 (not retryable)
+  enforce_limits: true       # true: answer 429 when over RPM/TPM; false: accept but count violations
+
+models:
+  - name: model-a
+    rpm: 30000
+    tpm: 60000000
+  - name: model-b
+    rpm: 20000
+    tpm: 40000000
+  - name: model-capacity
+    rpm: 50000
+    tpm: 100000000

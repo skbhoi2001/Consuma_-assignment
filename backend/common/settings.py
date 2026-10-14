@@ -25,6 +25,14 @@ class Settings(BaseSettings):
     # Rate limiting: aim slightly below the limit for safety headroom
     target_utilization: float = Field(0.98, gt=0, le=1)
 
+    # Max share of the per-minute limit sent in any one second, as a multiple of limit/60.
+    # 1.0 = perfectly smooth pacing; None (unset) = no per-second cap.
+    limiter_burst_factor: float | None = Field(1.0, gt=0)
+
+    # Provider simulator
+    simulator_config_path: Path = Path("config/simulator.yaml")
+    simulator_seed: int | None = None
+
     # Input limits
     max_batch_size: int = Field(100_000, gt=0)
     max_estimated_tokens: int = Field(1_000_000, gt=0)
