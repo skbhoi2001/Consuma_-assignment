@@ -77,6 +77,7 @@ class RequestRow(Base):
     __tablename__ = "requests"
 
     request_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    client_request_id: Mapped[str | None] = mapped_column(String(128))
     batch_id: Mapped[str | None] = mapped_column(ForeignKey("batches.batch_id", ondelete="CASCADE"))
     model: Mapped[str] = mapped_column(String(64))
     state: Mapped[str] = mapped_column(String(16))

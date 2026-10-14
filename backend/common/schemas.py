@@ -74,8 +74,10 @@ class BatchCreate(BaseModel):
 
 class RequestAck(BaseModel):
     request_id: str
+    client_request_id: str | None = None
     state: RequestState
     accepted_at: datetime
+    reason: str | None = None  # why it was rejected, if it was
 
 
 class BatchAck(BaseModel):
@@ -88,6 +90,7 @@ class BatchAck(BaseModel):
 
 class RequestStatus(BaseModel):
     request_id: str
+    client_request_id: str | None = None
     batch_id: str | None = None
     model: str
     state: RequestState
@@ -114,6 +117,12 @@ class BatchSummary(BaseModel):
     completed_at: datetime | None = None
     callback_status: CallbackStatus
     results_url: str
+
+
+class BatchResultsPage(BaseModel):
+    batch_id: str
+    items: list[RequestStatus]
+    next_cursor: str | None = None  # pass as ?cursor= to get the next page
 
 
 class CallbackPayload(BaseModel):

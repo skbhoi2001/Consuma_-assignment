@@ -1,7 +1,7 @@
 PY := .venv/bin/python
 PIP := .venv/bin/pip
 
-.PHONY: install up down db-native test lint fmt clean migrate migrate-down seed db-reset simulator
+.PHONY: install up down db-native test lint fmt clean migrate migrate-down seed db-reset simulator gateway receiver smoke
 
 install:            ## create venv and install deps
 	python3 -m venv .venv
@@ -45,3 +45,12 @@ db-reset: migrate-down migrate seed   ## wipe and rebuild the schema
 
 simulator:          ## run the provider simulator on :9000
 	.venv/bin/uvicorn backend.simulator.app:create_app --factory --port 9000
+
+gateway:            ## run the gateway API on :8000
+	.venv/bin/uvicorn backend.gateway.app:create_app --factory --port 8000
+
+receiver:           ## run the test callback receiver on :9100
+	.venv/bin/uvicorn backend.receiver.app:create_app --factory --port 9100
+
+smoke:              ## live Scenario-3 check (simulator, receiver, gateway must be running)
+	$(PY) scripts/smoke_batch.py --n 10000

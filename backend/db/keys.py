@@ -38,5 +38,5 @@ def batch_pending(batch_id: str) -> str:
     return f"{PREFIX}:batch:{batch_id}:pending"
 
 
-RETRY_ZSET = f"{PREFIX}:retry"  # request ids scored by next-attempt time
 CALLBACK_ZSET = f"{PREFIX}:callbacks"  # batch ids scored by next delivery time
+STATS = f"{PREFIX}:stats"  # global counters: submitted, succeeded, failed, expired, rejected

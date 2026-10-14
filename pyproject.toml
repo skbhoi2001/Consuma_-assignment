@@ -24,6 +24,7 @@ dependencies = [
   "sse-starlette>=2.1",
   "hdrhistogram>=0.10",
   "matplotlib>=3.9",
+  "aiohttp>=3.9",
 ]
 
 [project.optional-dependencies]

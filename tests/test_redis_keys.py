@@ -10,7 +10,7 @@ def test_keys_are_prefixed_and_distinct():
         keys.request("req_1"),
         keys.batch("bat_1"),
         keys.batch_pending("bat_1"),
-        keys.RETRY_ZSET,
+        keys.STATS,
         keys.CALLBACK_ZSET,
     ]
     assert all(n.startswith(f"{keys.PREFIX}:") for n in names)
