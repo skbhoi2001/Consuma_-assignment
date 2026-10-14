@@ -1,0 +1,20 @@
+# Per-model provider limits. Change at runtime later via PATCH /v1/models/{model}/limits.
+models:
+  - name: model-a
+    rpm: 30000            # requests per minute
+    tpm: 60000000         # tokens per minute
+    max_queue: 200000     # queue bound -> beyond this, new requests are REJECTED (429)
+    max_wait_seconds: 120 # waiting longer than this -> EXPIRED
+
+  - name: model-b
+    rpm: 20000
+    tpm: 40000000
+    max_queue: 200000
+    max_wait_seconds: 120
+
+  # Used by Scenario 1 (single model at full provider capacity)
+  - name: model-capacity
+    rpm: 50000
+    tpm: 100000000
+    max_queue: 500000
+    max_wait_seconds: 120

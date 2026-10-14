@@ -1,0 +1,44 @@
+"""Application settings, loaded from environment variables / .env."""
+
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # Infrastructure
+    database_url: str = "postgresql+asyncpg://postgres@localhost:5432/inference"
+    redis_url: str = "redis://localhost:6379/0"
+    gateway_port: int = 8000
+    simulator_url: str = "http://localhost:9000"
+    simulator_port: int = 9000
+    receiver_port: int = 9100
+    log_level: str = "INFO"
+
+    # Models
+    models_config_path: Path = Path("config/models.yaml")
+
+    # Rate limiting: aim slightly below the limit for safety headroom
+    target_utilization: float = Field(0.98, gt=0, le=1)
+
+    # Input limits
+    max_batch_size: int = Field(100_000, gt=0)
+    max_estimated_tokens: int = Field(1_000_000, gt=0)
+
+    # Provider-call retries (transient failures)
+    max_attempts: int = Field(4, ge=1)
+    retry_base_delay_ms: int = Field(200, gt=0)
+    retry_max_delay_ms: int = Field(10_000, gt=0)
+
+    # Callback delivery retries
+    callback_max_attempts: int = Field(10, ge=1)
+    callback_base_delay_ms: int = Field(1_000, gt=0)
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
