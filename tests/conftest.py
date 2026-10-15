@@ -39,3 +39,51 @@ async def ensure_database(url: str) -> None:
             await conn.execute(f'CREATE DATABASE "{u.database}"')
     finally:
         await conn.close()
+
+
+# ---------- fixtures for the gateway / dispatcher (commit 5) ----------
+
+ALL_TABLES = (
+    "run_results, run_metrics, runs, callback_attempts, requests, batches, "
+    "model_limit_changes, models"
+)
+
+
+@pytest.fixture
+async def redis15():
+    """Clean Redis database 15 (test-only)."""
+    from backend.db.redis_client import make_redis
+
+    if not port_open("localhost", 6379):
+        pytest.skip("Redis not running")
+    r = make_redis(TEST_REDIS_URL)
+    await r.flushdb()
+    yield r
+    await r.flushdb()
+    await r.aclose()
+
+
+@pytest.fixture
+async def pg_sessionmaker():
+    """Migrated, empty test database."""
+    import subprocess
+    import sys
+
+    from sqlalchemy import text
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+    if not port_open("localhost", 5432):
+        pytest.skip("Postgres not running")
+    await ensure_database(TEST_DATABASE_URL)
+    env = {**os.environ, "DATABASE_URL": TEST_DATABASE_URL}
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        check=True,
+        env=env,
+        capture_output=True,
+    )
+    engine = create_async_engine(TEST_DATABASE_URL)
+    async with engine.begin() as conn:
+        await conn.execute(text(f"TRUNCATE {ALL_TABLES} CASCADE"))
+    yield async_sessionmaker(engine, expire_on_commit=False)
+    await engine.dispose()

@@ -15,8 +15,10 @@ The cost is at most ~1/61 (1.6%) of capacity.
 
 Smooth pacing
 -------------
-With `burst_factor=1.0` at most ceil(limit/60) requests (and tokens) go out per second, so a
-backlog drains as a steady stream instead of one huge burst at the start of each minute.
+With `burst_factor=1.0` at most ceil(limit/60) requests (and tokens) go out per second, released
+in 100 ms slices, so a backlog drains as a steady stream instead of a burst at the start of each
+minute (or each second). Bursts matter: they queue in the HTTP connection pool, and requests
+that arrive late at the provider can land after a limit change.
 
 Single-threaded (asyncio) use only. Multi-process scaling splits a model's limit into
 per-process shares instead of sharing one limiter (see later commits).
@@ -31,6 +33,7 @@ from backend.common.schemas import ModelConfig
 
 WINDOW_SECONDS = 60
 BUCKETS = WINDOW_SECONDS + 1
+PACING_SLICES = 10  # each second's share is released in 100 ms steps
 
 
 @dataclass(frozen=True, slots=True)
@@ -137,11 +140,18 @@ class SlidingWindowLimiter:
 
         idx = second % BUCKETS
         if self.per_second_requests is not None and self.per_second_tokens is not None:
-            over_requests = self._req[idx] + 1 > self.per_second_requests
+            # Spread each second's share over PACING_SLICES slices, so a backlog doesn't go out
+            # as one burst at the start of every second.
+            into = t - second
+            share = min(1.0, (math.floor(into * PACING_SLICES) + 1) / PACING_SLICES)
+            over_requests = self._req[idx] + 1 > math.ceil(self.per_second_requests * share)
             # a lone request bigger than the per-second token share is still allowed
-            over_tokens = self._req[idx] > 0 and self._tok[idx] + tokens > self.per_second_tokens
+            over_tokens = self._req[idx] > 0 and self._tok[idx] + tokens > math.ceil(
+                self.per_second_tokens * share
+            )
             if over_requests or over_tokens:
-                return Decision(False, (second + 1) - t)
+                next_slice = (math.floor(into * PACING_SLICES) + 1) / PACING_SLICES
+                return Decision(False, max(0.001, next_slice - into))
 
         self._req[idx] += 1
         self._tok[idx] += tokens

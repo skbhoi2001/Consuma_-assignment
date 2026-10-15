@@ -1,0 +1,24 @@
+# Scenario 2 - different models and changing limits.
+# Model A 30k RPM / 60M TPM, model B 20k / 40M, both offered ~20% above their limit.
+# At t=120 s A is cut to 5,000 RPM; at t=270 s it is restored to 30,000. B is never touched.
+scenario: s2
+description: >-
+  Two models (A 30k RPM, B 20k RPM) loaded above capacity; A is cut to 5,000 RPM at 2:00 and
+  restored at 4:30 without restarting anything; B must keep processing.
+rate: 1000                 # A gets 60% (36k RPM), B 40% (24k RPM)
+duration_seconds: 420
+warmup_seconds: 60
+models: {model-a: 0.6, model-b: 0.4}
+batch_size: 100
+tokens: 1000
+drain_timeout_seconds: 240
+set_limits:
+  model-a: {rpm: 30000, tpm: 60000000}
+  model-b: {rpm: 20000, tpm: 40000000}
+simulator:
+  model-a: {transient_error_rate: 0.0, permanent_error_rate: 0.0, enforce_limits: true}
+  model-b: {transient_error_rate: 0.0, permanent_error_rate: 0.0, enforce_limits: true}
+limit_changes:
+  - {at_seconds: 120, model: model-a, rpm: 5000}
+  - {at_seconds: 270, model: model-a, rpm: 30000}
+checks: [accounting, limits_respected, scenario2, no_restart]

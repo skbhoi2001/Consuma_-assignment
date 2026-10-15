@@ -123,6 +123,8 @@ class Run(Base):
     machine_info: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     started_at: Mapped[datetime] = mapped_column(TZ, server_default=func.now())
     ended_at: Mapped[datetime | None] = mapped_column(TZ)
+    summary: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # totals, latency, checks
+    report_dir: Mapped[str | None] = mapped_column(Text)  # results/<scenario>/<timestamp>
 
 
 class RunMetric(Base):

@@ -11,6 +11,7 @@ from sqlalchemy import select
 
 from backend.common.ids import utc_now
 from backend.common.model_registry import load_models
+from backend.common.schemas import ModelConfig
 from backend.common.settings import get_settings
 from backend.db.session import dispose_engine, get_sessionmaker
 from backend.db.tables import ModelLimitChange, ModelRow
@@ -70,6 +71,45 @@ async def seed_models() -> dict[str, str]:
         session.add_all(history)
 
     return outcome
+
+
+async def load_runtime_models(sessionmaker, config_path) -> dict[str, ModelConfig]:
+    """Models for the gateway at startup.
+
+    Models from models.yaml that aren't in the database yet are inserted. Then everything is
+    read back from the database, so limits changed through the API survive a restart.
+    """
+    configs = load_models(config_path)
+    async with sessionmaker() as session, session.begin():
+        existing = set((await session.scalars(select(ModelRow.name))).all())
+        new = [cfg for name, cfg in configs.items() if name not in existing]
+        for cfg in new:
+            session.add(
+                ModelRow(
+                    name=cfg.name,
+                    rpm=cfg.rpm,
+                    tpm=cfg.tpm,
+                    max_queue=cfg.max_queue,
+                    max_wait_seconds=cfg.max_wait_seconds,
+                )
+            )
+        await session.flush()
+        for cfg in new:
+            session.add(
+                ModelLimitChange(model=cfg.name, new_rpm=cfg.rpm, new_tpm=cfg.tpm, source="config")
+            )
+    async with sessionmaker() as session:
+        rows = (await session.scalars(select(ModelRow).order_by(ModelRow.name))).all()
+    return {
+        r.name: ModelConfig(
+            name=r.name,
+            rpm=r.rpm,
+            tpm=r.tpm,
+            max_queue=r.max_queue,
+            max_wait_seconds=r.max_wait_seconds,
+        )
+        for r in rows
+    }
 
 
 async def _main() -> None:

@@ -51,10 +51,14 @@ class Settings(BaseSettings):
     # Dispatcher
     max_inflight_per_model: int = Field(1_000, gt=0)
     provider_timeout_seconds: float = Field(30.0, gt=0)
-    provider_max_connections: int = Field(256, gt=0)
+    provider_max_connections: int = Field(512, gt=0)
     request_ttl_seconds: int = Field(86_400, gt=0)  # live state kept in Redis this long
     results_flush_interval_ms: int = Field(250, gt=0)
     results_flush_max_rows: int = Field(2_000, gt=0)
+
+    # Push limit changes made through the gateway API to the simulator too
+    sync_simulator_limits: bool = True
+    metrics_retention_seconds: int = Field(3_600, gt=0)
 
     # Public URL of the gateway, used to build results_url in batch status and callbacks
     public_base_url: str = "http://localhost:8000"

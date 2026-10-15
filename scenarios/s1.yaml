@@ -1,0 +1,20 @@
+# Scenario 1 - reach the available provider capacity.
+# One model at 50,000 RPM / 100M TPM. 1,000-token requests at 60,000 RPM (20% above capacity)
+# for 6 minutes. Pass: >= 90% of capacity completed after a 1-minute warm-up, no 60 s window
+# over either limit, every request accounted for.
+scenario: s1
+description: >-
+  Reach the available provider capacity: one model at 50,000 RPM / 100M TPM, 1,000-token
+  requests offered at 60,000 RPM for 6 minutes.
+rate: 1000                 # requests/second = 60,000 RPM
+duration_seconds: 360
+warmup_seconds: 60
+models: {model-capacity: 1.0}
+batch_size: 100            # 10 batch calls/s keeps HTTP overhead off the measurement
+tokens: 1000
+drain_timeout_seconds: 240
+set_limits:
+  model-capacity: {rpm: 50000, tpm: 100000000}
+simulator:
+  model-capacity: {transient_error_rate: 0.0, permanent_error_rate: 0.0, enforce_limits: true}
+checks: [accounting, limits_respected, utilization]

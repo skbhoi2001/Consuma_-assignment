@@ -27,6 +27,7 @@ class Job:
     result: dict[str, Any] | None = None
     error: str | None = None
     finished_at: float | None = None
+    call_ms: float | None = None  # duration of the last provider call (excludes queueing)
 
     def move(self, new: RequestState) -> None:
         """Change state; raises InvalidTransitionError on an illegal move."""

@@ -10,7 +10,9 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 
 from backend.simulator.config import SimModelConfig, SimModelUpdate
-from backend.simulator.referee import ExactWindow
+from backend.simulator.referee import BucketWindow, ExactWindow
+
+Window = ExactWindow | BucketWindow
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,7 +32,7 @@ class ModelStats:
     permanent_errors: int = 0
     rate_limited: int = 0  # answered 429 because the call would exceed RPM/TPM
     violations: int = 0  # accepted while over the limit (only when enforce_limits=false)
-    window: ExactWindow = field(default_factory=ExactWindow)
+    window: Window = field(default_factory=ExactWindow)
 
 
 class ProviderSimulator:
@@ -40,9 +42,11 @@ class ProviderSimulator:
         *,
         seed: int | None = None,
         clock: Callable[[], float] = time.time,
+        window_factory: Callable[[], Window] = ExactWindow,
     ) -> None:
+        self._window_factory = window_factory
         self._models = {m.name: m for m in models}
-        self._stats = {m.name: ModelStats() for m in models}
+        self._stats = {m.name: ModelStats(window=window_factory()) for m in models}
         self._rng = random.Random(seed)
         self._clock = clock
 
@@ -113,4 +117,4 @@ class ProviderSimulator:
         return out
 
     def reset(self) -> None:
-        self._stats = {name: ModelStats() for name in self._models}
+        self._stats = {name: ModelStats(window=self._window_factory()) for name in self._models}

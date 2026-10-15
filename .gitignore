@@ -21,3 +21,7 @@ results/*
 
 # Docs (kept local)
 docs/
+
+logs/
+frontend/node_modules/
+frontend/dist/

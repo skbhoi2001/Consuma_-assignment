@@ -47,7 +47,7 @@ class HttpProviderClient:
     The connection pool is bounded; extra calls wait for a free connection.
     """
 
-    def __init__(self, base_url: str, *, timeout: float = 30.0, max_connections: int = 256):
+    def __init__(self, base_url: str, *, timeout: float = 30.0, max_connections: int = 512):
         self._url = base_url.rstrip("/") + "/sim/inference"
         self._timeout = aiohttp.ClientTimeout(total=timeout)
         self._max_connections = max_connections

@@ -76,13 +76,15 @@ def test_limit_decrease_waits_for_window_to_drain_then_increase_applies_immediat
     assert fill(lim, 100, 1, now=62.0) == 80  # 20 used + 80 more = 100
 
 
-def test_per_second_pacing():
-    lim = limiter(rpm=600, burst_factor=1.0)  # 600/min -> 10 per second
+def test_per_second_pacing_in_100ms_slices():
+    lim = limiter(rpm=600, burst_factor=1.0)  # 600/min -> 10 per second, 1 per 100 ms slice
     assert lim.per_second_requests == 10
-    assert fill(lim, 20, 1, now=1.0) == 10
-    d = lim.try_acquire(1, now=1.4)
-    assert not d.allowed and d.retry_after == pytest.approx(0.6)
-    assert fill(lim, 20, 1, now=2.0) == 10
+    assert fill(lim, 20, 1, now=1.0) == 1  # first slice of second 1
+    d = lim.try_acquire(1, now=1.02)
+    assert not d.allowed and d.retry_after == pytest.approx(0.08)
+    assert fill(lim, 20, 1, now=1.55) == 5  # by the 6th slice: 6 in total
+    assert fill(lim, 20, 1, now=1.95) == 4  # last slice: the full 10
+    assert fill(lim, 20, 1, now=2.95) == 10  # a new second
 
 
 def test_lone_large_request_allowed_despite_per_second_token_share():
